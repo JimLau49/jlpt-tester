@@ -4,6 +4,7 @@ import { parseFormattedText } from '@/lib/utils/text-parser';
 type Choice = {
   id: string | number;
   text: string;
+  imageUrl?: string;
 };
 
 type QuestionCardProps = {
@@ -32,12 +33,57 @@ export function QuestionCard({
   layout = 'grid' // Default to grid (good for short vocab)
 }: QuestionCardProps) {
   return (
-    <div className="w-full border-b border-zinc-200 dark:border-zinc-800 pb-6 mb-6 last:border-0 last:mb-0 last:pb-0">
+    <div className="w-full border-b border-border-soft pb-6 mb-6 last:border-0 last:mb-0 last:pb-0">
+        {/* Instruction Section - Compact Header */}
         {/* Instruction Section - Compact Header */}
         {instruction && (
-            <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 px-3 py-2 text-sm font-medium mb-2 rounded-sm">
-                {instruction}
-            </div>
+            (instruction.includes('[Script]') || instruction.includes('[Transcript]')) ? (
+                isSubmitted && (
+                    <details className="mb-4 group">
+                        <summary className="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 list-none flex items-center gap-2 select-none">
+                             <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                            Show Listening Transcript
+                        </summary>
+                        <div className="mt-2 p-4 bg-surface-muted rounded-lg text-base text-foreground/85 leading-relaxed border border-border-soft space-y-2 jp-text">
+                            {instruction.replace(/\[(Script|Transcript)\]/g, '').trim().split('\n').map((line, i) => {
+                                const trimmed = line.trim();
+                                if (!trimmed) return null;
+                                
+                                // Styling for Reference / Context
+                                if (trimmed.startsWith('Reference:')) {
+                                     return (
+                                        <div key={i} className="text-text-muted italic pb-2 mb-2 border-b border-border-soft">
+                                            {parseFormattedText(trimmed)}
+                                        </div>
+                                    );
+                                }
+                                
+                                // Speaker styling (e.g. "Man:", "女:", "A:")
+                                // We look for a short prefix followed by a colon
+                                const speakerMatch = trimmed.match(/^([^:：]{1,10})[:：](.+)$/);
+                                if (speakerMatch) {
+                                    const speaker = speakerMatch[1];
+                                    const content = speakerMatch[2];
+                                    return (
+                                        <div key={i} className="flex flex-col sm:flex-row gap-1 sm:gap-3">
+                                            <span className="font-bold text-foreground min-w-[3rem] shrink-0 sm:text-right">{speaker}:</span>
+                                            <span>{parseFormattedText(content)}</span>
+                                        </div>
+                                    );
+                                }
+
+                                return <div key={i}>{parseFormattedText(trimmed)}</div>;
+                            })}
+                        </div>
+                    </details>
+                )
+            ) : (
+                <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 px-3 py-2 text-sm font-medium mb-2 rounded-sm">
+                    {parseFormattedText(instruction)}
+                </div>
+            )
         )}
 
       <div className="flex flex-col gap-2">
@@ -51,15 +97,15 @@ export function QuestionCard({
         )}
 
         {/* Question Text Bar */}
-        <div className="bg-zinc-100 dark:bg-zinc-800/50 px-3 py-2 rounded-sm flex items-baseline gap-3">
+        <div className="bg-surface-muted px-4 py-3 rounded flex items-baseline gap-3">
              {questionNumber && (
-                <span className="font-bold text-zinc-900 dark:text-zinc-100 select-none">
+                <span className="font-bold text-foreground select-none">
                     {questionNumber}.
                 </span>
             )}
-            <h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100 leading-normal">
+            <div className="text-lg font-medium text-foreground leading-relaxed jp-text">
                 {parseFormattedText(questionText)}
-            </h2>
+            </div>
         </div>
 
         {/* Choices Container */}
@@ -71,21 +117,29 @@ export function QuestionCard({
 
                 // Determine feedback styles
                 let feedbackTextPrefix = null;
-                let textClass = 'text-zinc-800 dark:text-zinc-300';
-                let indicatorClass = 'border-zinc-400 dark:border-zinc-600 bg-white dark:bg-zinc-900 group-hover:border-blue-400';
+                let textClass = 'text-foreground/90';
+                let indicatorClass = 'border-border-soft bg-surface group-hover:border-blue-400';
                 
                 if (isSubmitted) {
+                    const userMissedQuestion = !selectedChoiceId;
+
                     if (isCorrect) {
-                         feedbackTextPrefix = <span className="font-bold text-blue-600 dark:text-blue-400 mr-2">正解:</span>;
-                         textClass = 'text-blue-600 dark:text-blue-400 font-bold';
-                         indicatorClass = 'bg-blue-500 border-blue-500 text-white'; 
+                         if (userMissedQuestion) {
+                             feedbackTextPrefix = <span className="font-bold text-red-600 dark:text-red-400 mr-2">正解 (未回答):</span>;
+                             textClass = 'text-red-600 dark:text-red-400 font-bold';
+                             indicatorClass = 'bg-red-500 border-red-500 text-white';
+                         } else {
+                             feedbackTextPrefix = <span className="font-bold text-blue-600 dark:text-blue-400 mr-2">正解:</span>;
+                             textClass = 'text-blue-600 dark:text-blue-400 font-bold';
+                             indicatorClass = 'bg-blue-500 border-blue-500 text-white'; 
+                         }
                     } else if (isSelected && !isCorrect) {
                         feedbackTextPrefix = <span className="font-bold text-red-600 dark:text-red-400 mr-2">不正解:</span>;
                         textClass = 'text-red-600 dark:text-red-400 font-bold';
                         indicatorClass = 'bg-blue-500 border-blue-500'; 
                     } else {
-                        textClass = 'text-zinc-400 dark:text-zinc-600';
-                        indicatorClass = 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800';
+                        textClass = 'text-text-muted/70';
+                        indicatorClass = 'border-border-soft bg-surface-muted';
                     }
                 } else if (isSelected) {
                      textClass = 'text-blue-700 dark:text-blue-300 font-semibold';
@@ -97,7 +151,7 @@ export function QuestionCard({
                     key={choice.id}
                     onClick={() => !isSubmitted && onSelectChoice(choice.id)}
                     disabled={isSubmitted}
-                    className="group flex items-start gap-3 py-2 px-2 text-left rounded hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors disabled:cursor-default"
+                    className="group flex items-start gap-3 py-2.5 px-2 text-left rounded hover:bg-surface-muted/60 transition-colors disabled:cursor-default"
                 >   
                     {/* Fixed Width Label Container for Hanging Indent */}
                     <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
@@ -112,16 +166,24 @@ export function QuestionCard({
                         </div>
                         
                         {!feedbackTextPrefix && (
-                             <span className={`text-sm font-medium select-none ${isSubmitted ? 'text-zinc-400' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                             <span className={`text-base font-medium select-none ${isSubmitted ? 'text-text-muted/60' : 'text-text-muted'}`}>
                                 {choiceLabel})
                             </span>
                         )}
                     </div>
 
-                    <span className={`text-sm leading-relaxed ${textClass} flex-1`}>
+                    <span className={`text-base leading-relaxed jp-text ${textClass} flex-1`}>
                         {feedbackTextPrefix}
-                        {feedbackTextPrefix && <span className="text-inherit text-sm mr-1">{choiceLabel})</span>}
-                        {parseFormattedText(choice.text)}
+                        {feedbackTextPrefix && <span className="text-inherit text-base mr-1">{choiceLabel})</span>}
+                        {choice.imageUrl ? (
+                             <img
+                                src={choice.imageUrl}
+                                alt={`Choice ${choiceLabel}`}
+                                className="max-w-[200px] max-h-[150px] object-contain rounded border border-border-soft bg-surface"
+                            />
+                        ) : (
+                             parseFormattedText(choice.text)
+                        )}
                     </span>
                 </button>
                 );

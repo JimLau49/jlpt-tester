@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,26 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# exam content: real test data, questions and audio stay local
+/data/
+/public/audio/
+/public/images/exams/
+/public/N1-*/
+/public/n1_*
+/vocab_fix_list.txt
+/temp_library_data.tsx
+
+# scripts: only generic tooling is tracked. The per-exam one-offs embed
+# question text, answer keys and source links.
+/scripts/*
+!/scripts/_local-media.ts
+!/scripts/check-db.ts
+!/scripts/diag_db.ts
+!/scripts/drop-file-bytea.ts
+!/scripts/migrate-media-to-r2.ts
+!/scripts/recover_json_from_db.ts
+!/scripts/reset-db.ts
+!/scripts/seed-audio.ts
+!/scripts/seed-exam-data.ts
+!/scripts/wipe_exam.js
