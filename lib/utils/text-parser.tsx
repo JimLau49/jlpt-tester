@@ -7,12 +7,35 @@ import React from 'react';
  * @returns ReactNode array with formatted segments.
  */
 
+const BLANK_SLOT = '<span class="inline-block w-11 h-7 mx-0.5 rounded border border-dashed border-text-muted/60 align-middle"></span>';
+const STAR_SLOT = '<span class="inline-flex items-center justify-center w-11 h-7 mx-0.5 rounded border-2 border-blue-500 dark:border-blue-400 bg-blue-500/10 text-sm text-blue-600 dark:text-blue-400 align-middle">★</span>';
+const UNDERLINE_BLANK = '<span class="inline-block w-10 mx-0.5 border-b-2 border-current align-baseline">&nbsp;</span>';
+
+/**
+ * Renders sentence-ordering blanks ("___ ___ _★_ ___") as a row of slots with
+ * the starred one highlighted. A lone "___" (as in "___の言葉") stays a plain rule.
+ */
+function renderBlanks(text: string): string {
+  return text.replace(/(?:(?:_+\s*★\s*_+|_{2,})[ 　]*)+/g, (run) => {
+    const tokens = run.match(/_+\s*★\s*_+|_{2,}/g) ?? [];
+    if (tokens.length === 1 && !tokens[0].includes('★')) return UNDERLINE_BLANK;
+    const slots = tokens.map((t) => (t.includes('★') ? STAR_SLOT : BLANK_SLOT)).join('');
+    return `<span class="whitespace-nowrap mx-1">${slots}</span>`;
+  });
+}
+
 export function parseFormattedText(text: string): React.ReactNode {
   if (!text) return null;
 
+  // Blanks are converted in text only, never inside tag attributes.
+  const withBlanks = text
+    .split(/(<[^>]+>)/)
+    .map((part) => (part.startsWith('<') ? part : renderBlanks(part)))
+    .join('');
+
   // Convert [u]...[/u] to HTML spans with Tailwind classes
   // Convert [u]...[/u] and <u>...</u> to HTML spans with Tailwind classes
-  let htmlContent = text
+  const htmlContent = withBlanks
     .replace(/\[u\]/g, '<span class="underline decoration-2 underline-offset-4 decoration-blue-500 dark:decoration-blue-400">')
     .replace(/\[\/u\]/g, '</span>')
     .replace(/<u>/g, '<span class="underline decoration-2 underline-offset-4 decoration-blue-500 dark:decoration-blue-400">')
