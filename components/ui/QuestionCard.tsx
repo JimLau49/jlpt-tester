@@ -32,8 +32,12 @@ export function QuestionCard({
   audioUrl,
   layout = 'grid' // Default to grid (good for short vocab)
 }: QuestionCardProps) {
+  // On a phone, short answers (readings, particles) sit two per row; anything longer gets its own row.
+  const longestChoice = Math.max(0, ...choices.map((c) => (c.imageUrl ? Infinity : c.text.replace(/<[^>]+>/g, '').length)));
+  const gridColumns = longestChoice <= 6 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2';
+
   return (
-    <div className="w-full border-b border-border-soft pb-6 mb-6 last:border-0 last:mb-0 last:pb-0">
+    <div className="w-full border-b border-border-soft pb-4 mb-4 md:pb-6 md:mb-6 last:border-0 last:mb-0 last:pb-0">
         {/* Instruction Section - Compact Header */}
         {/* Instruction Section - Compact Header */}
         {instruction && (
@@ -97,19 +101,19 @@ export function QuestionCard({
         )}
 
         {/* Question Text Bar */}
-        <div className="bg-surface-muted px-4 py-3 rounded flex items-baseline gap-3">
+        <div className="bg-surface-muted px-3 md:px-4 py-2.5 md:py-3 rounded flex items-baseline gap-2 md:gap-3">
              {questionNumber && (
                 <span className="font-bold text-foreground select-none">
                     {questionNumber}.
                 </span>
             )}
-            <div className="text-lg font-medium text-foreground leading-relaxed jp-text">
+            <div className="text-base md:text-lg font-medium text-foreground leading-relaxed jp-text min-w-0">
                 {parseFormattedText(questionText)}
             </div>
         </div>
 
         {/* Choices Container */}
-        <div className={`mt-2 ${layout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4' : 'flex flex-col gap-3'}`}>
+        <div className={`mt-2 ${layout === 'grid' ? `grid ${gridColumns} lg:grid-cols-4 gap-x-2 gap-y-0.5 sm:gap-4` : 'flex flex-col gap-1 md:gap-3'}`}>
             {choices.map((choice, index) => {
                 const isSelected = selectedChoiceId === choice.id;
                 const isCorrect = correctChoiceId === choice.id;
@@ -151,10 +155,10 @@ export function QuestionCard({
                     key={choice.id}
                     onClick={() => !isSubmitted && onSelectChoice(choice.id)}
                     disabled={isSubmitted}
-                    className="group flex items-start gap-3 py-2.5 px-2 text-left rounded hover:bg-surface-muted/60 transition-colors disabled:cursor-default"
+                    className="group flex items-start gap-2 sm:gap-3 py-2 sm:py-2.5 pl-3 pr-1 sm:px-2 text-left rounded hover:bg-surface-muted/60 transition-colors disabled:cursor-default"
                 >   
                     {/* Fixed Width Label Container for Hanging Indent */}
-                    <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 mt-0.5">
                         {/* Radio Circle */}
                         <div 
                             className={`

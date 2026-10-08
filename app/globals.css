@@ -9,6 +9,7 @@
   --surface-muted: #ede8dc;
   --border-soft: #e2dccc;
   --text-muted: #6b645a;
+  --accent: #2563eb;
 }
 
 .dark {
@@ -18,6 +19,7 @@
   --surface-muted: #2d2b27;
   --border-soft: #3a3732;
   --text-muted: #9a938a;
+  --accent: #60a5fa;
 }
 
 @theme inline {
@@ -36,6 +38,12 @@ html {
   font-size: 17px;
 }
 
+@media (max-width: 640px) {
+  html {
+    font-size: 16px;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -50,4 +58,175 @@ body {
 .jp-text {
   letter-spacing: 0.02em;
   line-height: 1.85;
+}
+
+/* Reading passages. The markup comes from exam data via formatPassageHtml(). */
+.passage {
+  max-width: 38em;
+  margin-inline: auto;
+  font-size: 1.02rem;
+  line-height: 2.05;
+  letter-spacing: 0.03em;
+  /* Long text reads better on the full-width grid than with "palt" tightening. */
+  font-feature-settings: normal;
+  line-break: strict;
+  text-align: justify;
+}
+
+.passage p {
+  margin: 0 0 1.05em;
+}
+
+.passage p:last-child {
+  margin-bottom: 0;
+}
+
+.passage-gap {
+  display: block;
+  height: 1.05em;
+}
+
+.passage-instruction {
+  font-size: 0.85em;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  text-align: left;
+  color: var(--text-muted);
+  padding-bottom: 0.9em;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.passage-label {
+  display: block;
+  width: fit-content;
+  margin-bottom: 0.7em;
+  padding: 0 0.75em;
+  border-radius: 999px;
+  font-size: 0.82em;
+  font-weight: 700;
+  line-height: 1.9;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+/* Underlined phrases are what the questions ask about; make them easy to find. */
+.passage u {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.32em;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  border-radius: 2px;
+  padding: 0.12em 0.1em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.passage-heading {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.passage-blank {
+  display: inline-block;
+  min-width: 3em;
+  margin: 0 0.25em;
+  padding: 0 0.5em;
+  border: 2px solid var(--accent);
+  border-radius: 0.3em;
+  font-size: 0.85em;
+  font-weight: 700;
+  line-height: 1.55;
+  letter-spacing: 0;
+  text-align: center;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.passage-note-ref {
+  margin: 0 0.1em;
+  font-size: 0.68em;
+  letter-spacing: 0;
+  vertical-align: 0.5em;
+  color: var(--accent);
+}
+
+.passage-note {
+  display: block;
+  margin-top: 1.5em;
+  padding-top: 0.9em;
+  border-top: 1px solid var(--border-soft);
+  font-size: 0.86em;
+  line-height: 1.75;
+  letter-spacing: 0.02em;
+  text-align: left;
+  color: var(--text-muted);
+}
+
+.passage-note + .passage-note {
+  margin-top: 0.2em;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.passage-source,
+.passage [style*="text-align:right"],
+.passage [style*="text-align: right"] {
+  display: block;
+  margin-top: 0.9em;
+  font-size: 0.86em;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  text-align: right;
+  color: var(--text-muted);
+}
+
+/* !important: stored passages carry inline hr styles with a fixed light colour. */
+.passage hr {
+  margin: 2.2em 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--border-soft) !important;
+}
+
+.passage h4,
+.passage h5,
+.passage center {
+  display: block;
+  margin: 0.2em 0 0.9em;
+  font-size: 1.08em;
+  font-weight: 700;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.passage table {
+  width: 100%;
+  margin: 0.9em 0;
+  border-collapse: collapse;
+  font-size: 0.88em;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  text-align: left;
+}
+
+.passage th,
+.passage td {
+  padding: 0.45em 0.65em;
+  border: 1px solid var(--border-soft);
+  vertical-align: top;
+}
+
+.passage th {
+  font-weight: 600;
+  background: var(--surface-muted);
+}
+
+/* Narrow columns: justification stretches short lines, so set passages ragged-right. */
+@media (max-width: 640px) {
+  .passage {
+    line-height: 1.95;
+    letter-spacing: 0.02em;
+    text-align: start;
+  }
 }

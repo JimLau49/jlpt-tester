@@ -174,103 +174,120 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
   // Section score for Header
   const { score: sectionScore, total: sectionTotal } = calculateScore(currentSection);
 
-  return (
-    <div className="min-h-screen bg-background font-sans transition-colors duration-300">
+  const currentSectionName = currentSection.charAt(0).toUpperCase() + currentSection.slice(1);
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-surface/85 backdrop-blur-md border-b border-border-soft h-16 flex items-center justify-between px-6 md:px-12">
-        <Link href="/" className="font-bold text-xl tracking-tight flex items-center gap-3 hover:opacity-80 transition-opacity">
-             JLPT Tester 
-             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-100">
-                {data.level} {data.session} {data.year}
-             </span>
-             
-             {/* Simple Breadcrumb/Indicator */}
-             <div className="hidden md:flex items-center gap-2 ml-4 text-sm font-medium">
-                <button 
-                    onClick={(e) => {
-                        e.preventDefault();
-                        setCurrentSection('vocab');
-                        window.scrollTo({ top: 0, behavior: 'auto' });
-                    }}
-                    className={`px-3 py-1 rounded text-xs transition-colors hover:bg-surface-muted ${currentSection === 'vocab' ? 'bg-surface-muted text-foreground font-semibold' : 'text-text-muted'}`}
-                >
-                    Vocabulary
-                </button>
-                <span className="text-text-muted/50">/</span>
-                <button 
-                    onClick={(e) => {
-                        e.preventDefault();
-                        setCurrentSection('reading');
-                        window.scrollTo({ top: 0, behavior: 'auto' });
-                    }}
-                    className={`px-3 py-1 rounded text-xs transition-colors hover:bg-surface-muted ${currentSection === 'reading' ? 'bg-surface-muted text-foreground font-semibold' : 'text-text-muted'}`}
-                >
-                    Reading
-                </button>
-                <span className="text-text-muted/50">/</span>
-                <button 
-                    onClick={(e) => {
-                         e.preventDefault();
-                         setCurrentSection('listening');
-                         window.scrollTo({ top: 0, behavior: 'auto' });
-                    }}
-                    className={`px-3 py-1 rounded text-xs transition-colors hover:bg-surface-muted ${currentSection === 'listening' ? 'bg-surface-muted text-foreground font-semibold' : 'text-text-muted'}`}
-                >
-                    Listening
-                </button>
-             </div>
-        </Link>
-        <div className="flex items-center gap-4">
-            {!isAllSubmitted && (
-                <span className="text-sm font-medium text-text-muted hidden md:block">
-                    Time Elapsed: {formatTime(timeElapsed)}
-                    {isTimerPaused && <span className="ml-1 text-amber-600 dark:text-amber-400">(paused)</span>}
+  const sectionTabs = [
+    { key: 'vocab', label: 'Vocabulary', shortLabel: 'Vocab' },
+    { key: 'reading', label: 'Reading', shortLabel: 'Reading' },
+    { key: 'listening', label: 'Listening', shortLabel: 'Listening' },
+  ] as const;
+
+  // The header shows these twice: full labels on desktop, compact ones on the phone row.
+  const renderSectionTabs = (compact: boolean) => sectionTabs.map((tab, i) => (
+    <span key={tab.key} className="flex items-center gap-1 md:gap-2">
+        {i > 0 && <span className="text-text-muted/50">/</span>}
+        <button
+            onClick={() => {
+                setCurrentSection(tab.key);
+                window.scrollTo({ top: 0, behavior: 'auto' });
+            }}
+            className={`px-2.5 md:px-3 py-1 rounded text-xs whitespace-nowrap transition-colors hover:bg-surface-muted ${currentSection === tab.key ? 'bg-surface-muted text-foreground font-semibold' : 'text-text-muted'}`}
+        >
+            {compact ? tab.shortLabel : tab.label}
+        </button>
+    </span>
+  ));
+
+  const renderSectionActions = (compact: boolean) => {
+    const buttonSize = compact ? 'px-5 py-2 font-semibold' : 'px-4 py-2';
+    return (
+        <>
+            {submittedSections.has(currentSection) && (
+                <span className="text-sm font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                    {!compact && `${currentSectionName} Score: `}{sectionScore}/{sectionTotal}
                 </span>
             )}
-            {submittedSections.has(currentSection) && <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{currentSection.charAt(0).toUpperCase() + currentSection.slice(1)} Score: {sectionScore}/{sectionTotal}</span>}
-            
-            {/* Show global finish only if all done? Or just hide it and rely on section buttons? 
-                Let's keep a 'Review' button if all done. */}
-            {/* Dynamic Header Button based on Section State */}
             {submittedSections.has(currentSection) ? (
                 <button
                     onClick={() => handleSectionReset(currentSection)}
                     title="Un-check this section so you can keep editing your answers"
-                    className="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-amber-200 dark:border-amber-800"
+                    className={`flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50 ${buttonSize} rounded-lg text-sm font-medium whitespace-nowrap transition-colors border border-amber-200 dark:border-amber-800`}
                 >
-                    Reset {currentSection.charAt(0).toUpperCase() + currentSection.slice(1)}
+                    Reset{!compact && ` ${currentSectionName}`}
                     <span aria-hidden="true">↺</span>
                 </button>
             ) : (
                 <button
                     onClick={() => handleSectionSubmit(currentSection)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className={`bg-blue-600 hover:bg-blue-700 text-white ${buttonSize} rounded-lg text-sm font-medium whitespace-nowrap transition-colors`}
                 >
-                   Check {currentSection.charAt(0).toUpperCase() + currentSection.slice(1)}
+                   Check{!compact && ` ${currentSectionName}`}
                 </button>
             )}
             {isAllSubmitted && (
                <button
                     onClick={() => setShowScoreModal(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className={`bg-blue-600 hover:bg-blue-700 text-white ${buttonSize} rounded-lg text-sm font-medium whitespace-nowrap transition-colors`}
                 >
-                    Review Final Results
+                    {compact ? 'Results' : 'Review Final Results'}
                 </button>
             )}
-            <ThemeToggle />
+        </>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-background font-sans transition-colors duration-300">
+
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-surface/85 backdrop-blur-md border-b border-border-soft px-3 md:px-12">
+        <div className="h-12 md:h-16 flex items-center justify-between gap-2">
+            <div className="flex items-center min-w-0">
+                <Link href="/" className="font-bold text-base md:text-xl tracking-tight flex items-center gap-2 md:gap-3 whitespace-nowrap hover:opacity-80 transition-opacity">
+                     JLPT Tester
+                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-100">
+                        {data.level} {data.session} {data.year}
+                     </span>
+                </Link>
+                <nav className="hidden md:flex items-center gap-2 ml-4 text-sm font-medium">
+                    {renderSectionTabs(false)}
+                </nav>
+            </div>
+            <div className="flex items-center gap-2 md:gap-4">
+                {!isAllSubmitted && (
+                    <span className={`text-xs md:text-sm font-medium tabular-nums whitespace-nowrap ${isTimerPaused ? 'text-amber-600 dark:text-amber-400 md:text-text-muted' : 'text-text-muted'}`}>
+                        <span className="hidden md:inline">Time Elapsed: </span>
+                        {formatTime(timeElapsed)}
+                        {isTimerPaused && <span className="hidden md:inline ml-1 text-amber-600 dark:text-amber-400">(paused)</span>}
+                    </span>
+                )}
+                <div className="hidden md:flex items-center gap-4">
+                    {renderSectionActions(false)}
+                </div>
+                <ThemeToggle />
+            </div>
+        </div>
+
+        {/* Phones: section tabs and the check button get their own row */}
+        <div className="md:hidden h-14 flex items-center justify-between gap-2 border-t border-border-soft/60">
+            <nav className="flex items-center gap-1 min-w-0 overflow-x-auto text-sm font-medium">
+                {renderSectionTabs(true)}
+            </nav>
+            <div className="flex items-center gap-2 shrink-0">
+                {renderSectionActions(true)}
+            </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="pt-20 pb-20 max-w-7xl mx-auto px-4 md:px-6 space-y-12">
+      <main className="pt-32 md:pt-20 pb-20 max-w-7xl mx-auto px-2 sm:px-4 md:px-6 space-y-8 md:space-y-12">
         
         {/* Section 1: Vocabulary + First Reading */}
         {currentSection === 'vocab' && (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Vocab Sections */}
             {vocabSections.map(section => (
-                <section key={section.id} className="bg-surface p-4 md:p-6 rounded-lg shadow-sm border border-border-soft">
+                <section key={section.id} className="bg-surface p-3 md:p-6 rounded-lg shadow-sm border border-border-soft">
                     <div className="mb-4 pb-2 border-b border-border-soft flex justify-between items-end">
                         <div>
                             <h2 className="text-lg font-bold text-foreground">{section.title}</h2>
@@ -303,7 +320,7 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
 
             {/* First Reading Section (Problem 7) */}
             {firstReadingSection && (
-                <section className="bg-surface p-4 md:p-6 rounded-lg shadow-sm border border-border-soft">
+                <section className="bg-surface p-3 md:p-6 rounded-lg shadow-sm border border-border-soft">
                     <div className="mb-4 pb-2 border-b border-border-soft">
                         <h2 className="text-lg font-bold text-foreground">{firstReadingSection.passageTitle || firstReadingSection.title}</h2>
                         {firstReadingSection.questions.length > 0 && 
@@ -341,11 +358,11 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
                 </section>
             )}
 
-            <div className="flex justify-center border-t border-border-soft pt-6 gap-4">
+            <div className="flex flex-wrap justify-center border-t border-border-soft pt-6 gap-2 sm:gap-4">
                  {/* Vocab Check Button */}
                 <button
                     onClick={() => submittedSections.has('vocab') ? handleSectionReset('vocab') : handleSectionSubmit('vocab')}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-full font-medium transition-colors ${
                         submittedSections.has('vocab')
                         ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50'
                         : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -359,7 +376,7 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
                         setCurrentSection('reading');
                         window.scrollTo({ top: 0, behavior: 'auto' });
                     }}
-                    className="flex items-center gap-2 px-6 py-3 bg-surface-muted hover:opacity-85 rounded-full text-foreground font-medium transition-colors"
+                    className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-surface-muted hover:opacity-85 rounded-full text-foreground font-medium transition-colors"
                 >
                     Next Section: Reading (Part 2)
                     <span aria-hidden="true">&rarr;</span>
@@ -373,7 +390,7 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
             <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 
                 {remainingReadingSections.map(section => (
-                    <section key={section.id} className="bg-surface p-4 md:p-6 rounded-lg shadow-sm border border-border-soft">
+                    <section key={section.id} className="bg-surface p-3 md:p-6 rounded-lg shadow-sm border border-border-soft">
                         <div className="mb-4 pb-2 border-b border-border-soft">
                             <h2 className="text-lg font-bold text-foreground">{section.passageTitle || section.title}</h2>
                             {section.questions.length > 0 && 
@@ -413,10 +430,10 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
                     </section>
                 ))}
 
-                <div className="flex justify-center border-t border-border-soft pt-6 gap-4">
+                <div className="flex flex-wrap justify-center border-t border-border-soft pt-6 gap-2 sm:gap-4">
                      <button 
                         onClick={() => setCurrentSection('vocab')}
-                        className="flex items-center gap-2 px-6 py-3 text-text-muted hover:bg-surface-muted rounded-full font-medium transition-colors"
+                        className="flex items-center gap-2 px-4 sm:px-6 py-3 text-text-muted hover:bg-surface-muted rounded-full font-medium transition-colors"
                     >
                         &larr; Previous Section
                     </button>
@@ -424,7 +441,7 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
                     {/* Reading Check Button */}
                     <button
                         onClick={() => submittedSections.has('reading') ? handleSectionReset('reading') : handleSectionSubmit('reading')}
-                         className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-colors ${
+                         className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-full font-medium transition-colors ${
                             submittedSections.has('reading')
                             ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50'
                             : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -438,7 +455,7 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
                              setCurrentSection('listening');
                              window.scrollTo({ top: 0, behavior: 'auto' });
                         }}
-                        className="flex items-center gap-2 px-6 py-3 bg-surface-muted hover:opacity-85 rounded-full text-foreground font-medium transition-colors"
+                        className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-surface-muted hover:opacity-85 rounded-full text-foreground font-medium transition-colors"
                     >
                         Next Section: Listening
                         <span aria-hidden="true">&rarr;</span>
@@ -469,7 +486,7 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
                         <>
                             {/* Sticky Player for Single Audio File */}
                             {isSingleAudio && singleAudioUrl && (
-                                <div className="sticky top-20 z-40 bg-surface/95 backdrop-blur border border-border-soft p-4 rounded-xl shadow-lg mb-8 flex flex-col items-center">
+                                <div className="sticky top-[7rem] md:top-20 z-40 bg-surface/95 backdrop-blur border border-border-soft p-4 rounded-xl shadow-lg mb-8 flex flex-col items-center">
                                     <h3 className="text-sm font-semibold text-text-muted mb-2 uppercase tracking-wider">Exam Audio Track</h3>
                                     <audio controls className="w-full max-w-3xl h-12">
                                         <source src={singleAudioUrl} type="audio/mpeg" />
@@ -479,7 +496,7 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
                             )}
 
                             {listeningSections.map(section => (
-                                <section key={section.id} className="bg-surface p-4 md:p-6 rounded-lg shadow-sm border border-border-soft">
+                                <section key={section.id} className="bg-surface p-3 md:p-6 rounded-lg shadow-sm border border-border-soft">
                                     <div className="mb-6 flex flex-col items-center justify-center py-6 bg-surface-muted rounded-lg border border-border-soft">
                                         <div className="mb-4 w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -537,10 +554,10 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
                     );
                 })()}
 
-                <div className="flex justify-center border-t border-border-soft pt-6 gap-4">
+                <div className="flex flex-wrap justify-center border-t border-border-soft pt-6 gap-2 sm:gap-4">
                      <button 
                         onClick={() => setCurrentSection('reading')}
-                        className="flex items-center gap-2 px-6 py-3 text-text-muted hover:bg-surface-muted rounded-full font-medium transition-colors"
+                        className="flex items-center gap-2 px-4 sm:px-6 py-3 text-text-muted hover:bg-surface-muted rounded-full font-medium transition-colors"
                     >
                         &larr; Previous Section
                     </button>
@@ -548,7 +565,7 @@ export default function QuizRunner({ data }: QuizRunnerProps) {
                     {/* Listening Check Button */}
                     <button
                         onClick={() => submittedSections.has('listening') ? handleSectionReset('listening') : handleSectionSubmit('listening')}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-colors ${
+                        className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-full font-medium transition-colors ${
                             submittedSections.has('listening')
                             ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50'
                             : 'bg-blue-600 text-white hover:bg-blue-700'
