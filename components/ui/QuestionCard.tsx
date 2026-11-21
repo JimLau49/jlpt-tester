@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { parseFormattedText } from '@/lib/utils/text-parser';
 
 type Choice = {
@@ -32,9 +32,23 @@ export function QuestionCard({
   audioUrl,
   layout = 'grid' // Default to grid (good for short vocab)
 }: QuestionCardProps) {
+  // Skipped questions keep their answer hidden after checking, so a partial
+  // test isn't spoiled. The user can reveal it per-question on demand.
+  const [revealed, setRevealed] = useState(false);
+
+  // Reset the reveal when the section is unchecked (render-time adjustment),
+  // so redoing the section isn't spoiled by a stale reveal
+  const [prevSubmitted, setPrevSubmitted] = useState(isSubmitted);
+  if (prevSubmitted !== isSubmitted) {
+    setPrevSubmitted(isSubmitted);
+    if (!isSubmitted) setRevealed(false);
+  }
+
+  const isSkipped = isSubmitted && !selectedChoiceId;
+  const isAnswerVisible = isSubmitted && (!!selectedChoiceId || revealed);
+
   return (
     <div className="w-full border-b border-border-soft pb-6 mb-6 last:border-0 last:mb-0 last:pb-0">
-        {/* Instruction Section - Compact Header */}
         {/* Instruction Section - Compact Header */}
         {instruction && (
             (instruction.includes('[Script]') || instruction.includes('[Transcript]')) ? (
@@ -106,6 +120,11 @@ export function QuestionCard({
             <div className="text-lg font-medium text-foreground leading-relaxed jp-text">
                 {parseFormattedText(questionText)}
             </div>
+            {isSkipped && (
+                <span className="ml-auto flex-shrink-0 self-center text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-full">
+                    Skipped
+                </span>
+            )}
         </div>
 
         {/* Choices Container */}
@@ -120,7 +139,7 @@ export function QuestionCard({
                 let textClass = 'text-foreground/90';
                 let indicatorClass = 'border-border-soft bg-surface group-hover:border-blue-400';
                 
-                if (isSubmitted) {
+                if (isAnswerVisible) {
                     const userMissedQuestion = !selectedChoiceId;
 
                     if (isCorrect) {
@@ -162,7 +181,7 @@ export function QuestionCard({
                             ${indicatorClass}
                             `}
                         >
-                             {(isSelected || (isSubmitted && isCorrect)) && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                             {(isSelected || (isAnswerVisible && isCorrect)) && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
                         
                         {!feedbackTextPrefix && (
@@ -189,6 +208,20 @@ export function QuestionCard({
                 );
             })}
         </div>
+
+        {/* Reveal Answer button for skipped questions (section checked, no answer given) */}
+        {isSkipped && !revealed && (
+            <button
+                onClick={() => setRevealed(true)}
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors select-none"
+            >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Reveal Answer
+            </button>
+        )}
       </div>
     </div>
   );
